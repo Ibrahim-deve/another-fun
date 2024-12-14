@@ -19,41 +19,50 @@
 
   <script>
     async function logVisitor(name, latitude, longitude) {
-      try {
-        // Fetch IP and location details
-        const response = await fetch('http://api.ipstack.com/check?access_key=924cc7ed2096aabe6fb2f22053425462');
-        const data = await response.json();
+  try {
+    // Fetch IP and location details using ipstack
+    const response = await fetch('http://api.ipstack.com/check?access_key=924cc7ed2096aabe6fb2f22053425462');  // Use the correct endpoint and your API key
+    const data = await response.json();
 
-        // Prepare data to send to the server
-        const visitorInfo = {
-          name: name,
-          ip: data.query,
-          location: `${data.city}, ${data.regionName}, ${data.country}`,
-          latitude: latitude,
-          longitude: longitude
-        };
-
-        // Send data to the backend
-        await fetch('https://de86-182-177-2-255.ngrok-free.app/log-visitor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(visitorInfo)
-        });
-
-        // Display data in the result section
-        const resultDiv = document.getElementById('result');
-        resultDiv.innerHTML = `<p><strong>Name:</strong> ${name}</p>
-                               <p><strong>IP:</strong> ${data.query}</p>
-                               <p><strong>Location:</strong> ${data.city}, ${data.regionName}, ${data.country}</p>
-                               <p><strong>Latitude:</strong> ${latitude}</p>
-                               <p><strong>Longitude:</strong> ${longitude}</p>`;
-
-        alert('Info logged successfully!');
-      } catch (error) {
-        console.error('Failed to log visitor info:', error);
-      }
+    if (!data || !data.ip) {
+      throw new Error('IP information not available');
     }
 
+    // Prepare data to send to the server
+    const visitorInfo = {
+      name: name,
+      ip: data.ip,
+      location: `${data.city}, ${data.region_name}, ${data.country_name}`,
+      latitude: latitude,
+      longitude: longitude
+    };
+
+    // Send data to the backend
+    const backendUrl = 'https://de86-182-177-2-255.ngrok-free.app/log-visitor'; // Replace with your valid ngrok URL
+    const fetchResponse = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(visitorInfo)
+    });
+
+    if (!fetchResponse.ok) {
+      throw new Error('Failed to log visitor info');
+    }
+
+    // Display data in the result section
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = `<p><strong>Name:</strong> ${name}</p>
+                           <p><strong>IP:</strong> ${data.ip}</p>
+                           <p><strong>Location:</strong> ${data.city}, ${data.region_name}, ${data.country_name}</p>
+                           <p><strong>Latitude:</strong> ${latitude}</p>
+                           <p><strong>Longitude:</strong> ${longitude}</p>`;
+
+    alert('Info logged successfully!');
+  } catch (error) {
+    console.error('Failed to log visitor info:', error);
+    alert('Error: ' + error.message); // Alert with the error message
+  }
+}
     // Handle form submission
     document.getElementById('visitor-form').addEventListener('submit', (e) => {
       e.preventDefault();
